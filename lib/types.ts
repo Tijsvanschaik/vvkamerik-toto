@@ -133,6 +133,15 @@ export interface PublicSettings {
   predictions_open: boolean;
   tikkie_url: string | null;
   entry_fee: number;
+  points_correct_winner: number;
+  points_correct_home_goals: number;
+  points_correct_away_goals: number;
+  points_exact_score_bonus: number;
+  points_topscorer_base: number;
+  points_topscorer_min: number;
+  prize_1st: number;
+  prize_2nd: number;
+  prize_3rd: number;
 }
 
 export interface TopScorerStat {

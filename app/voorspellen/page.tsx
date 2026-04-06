@@ -2,6 +2,94 @@
 
 import { useState, useEffect } from "react";
 import type { MatchWithTeams, PublicSettings } from "@/lib/types";
+
+function InstructionsCard({ s }: { s: PublicSettings }) {
+  const [open, setOpen] = useState(false);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">📋</span>
+          <div>
+            <p className="font-bold text-gray-900">Hoe werkt het?</p>
+            <p className="text-sm text-gray-400">Spelregels en puntentelling</p>
+          </div>
+        </div>
+        <span className="text-gray-400 text-sm">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="px-6 pb-6 space-y-5 border-t border-gray-50">
+          {/* Hoe meedoen */}
+          <div className="pt-4">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-2">Hoe doe je mee?</p>
+            <ol className="space-y-1.5 text-sm text-gray-600">
+              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">1.</span>Vul je naam en e-mailadres in</li>
+              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">2.</span>Voorspel de uitslag van alle {5} wedstrijden</li>
+              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">3.</span>Kies per wedstrijd een topscoorder uit het VVKamerik-elftal</li>
+              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">4.</span>Betaal de inleg van <strong>€{Number(s.entry_fee).toFixed(2)}</strong> via iDEAL</li>
+            </ol>
+          </div>
+
+          {/* Puntentelling */}
+          <div>
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-2">Puntentelling per wedstrijd</p>
+            <div className="space-y-1.5">
+              {[
+                { label: "Juiste winnaar (thuis/gelijk/uit)", pts: s.points_correct_winner },
+                { label: "Juiste aantal thuisgoals", pts: s.points_correct_home_goals },
+                { label: "Juiste aantal uitgoals", pts: s.points_correct_away_goals },
+                { label: "Exacte uitslag bonus", pts: s.points_exact_score_bonus },
+              ].map(({ label, pts }) => (
+                <div key={label} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                  <span className="text-sm text-gray-600">{label}</span>
+                  <span className="font-black text-[#1e3a8a] text-sm">+{pts} pt</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Topscoorder */}
+          <div>
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-2">Topscoorder bonus</p>
+            <div className="bg-gray-50 rounded-lg px-3 py-3 text-sm text-gray-600 space-y-1">
+              <p>Kies je een speler die scoort? Dan verdien je punten per goal:</p>
+              <p className="font-medium text-gray-800">
+                Punten per goal = {s.points_topscorer_base} ÷ aantal mensen dat dezelfde speler koos
+              </p>
+              <p className="text-gray-400 text-xs">Minimum {s.points_topscorer_min} punt per goal. Kies een &apos;sleeper&apos; en je pakt meer punten!</p>
+            </div>
+          </div>
+
+          {/* Prijzen */}
+          <div>
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-2">Prijzen</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { icon: "🥇", label: "1e plaats", prize: s.prize_1st },
+                { icon: "🥈", label: "2e plaats", prize: s.prize_2nd },
+                { icon: "🥉", label: "3e plaats", prize: s.prize_3rd },
+              ].map(({ icon, label, prize }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
+                  <p className="text-xl">{icon}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                  <p className="font-black text-[#1e3a8a] text-base">{fmt(prize)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 import MatchPredictionCard from "@/components/form/MatchPredictionCard";
 import ParticipantNameInput from "@/components/form/ParticipantNameInput";
 import SubmitButton from "@/components/form/SubmitButton";
@@ -174,6 +262,8 @@ export default function VoorspellenPage() {
                 errors={errors}
               />
             </div>
+
+            {settings && <InstructionsCard s={settings} />}
 
             {errors.form && (
               <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm border border-red-100">
