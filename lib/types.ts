@@ -67,6 +67,7 @@ export interface MatchScorerWithPlayer extends MatchScorer {
 export interface Participant {
   id: string;
   name: string;
+  email: string | null;
   has_paid: boolean;
   mollie_payment_id: string | null;
   created_at: string;
@@ -119,6 +120,7 @@ export interface MatchPointBreakdown {
 
 export interface PredictionSubmission {
   participant_name: string;
+  participant_email: string;
   predictions: {
     match_id: string;
     predicted_home_goals: number;

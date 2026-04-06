@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
     if (!body.participant_name?.trim()) {
       return Response.json({ error: "Naam is verplicht" }, { status: 400 });
     }
+    if (!body.participant_email?.trim()) {
+      return Response.json({ error: "E-mailadres is verplicht" }, { status: 400 });
+    }
 
     if (!body.predictions || body.predictions.length === 0) {
       return Response.json(
@@ -73,6 +76,7 @@ export async function POST(request: NextRequest) {
       .from("participants")
       .insert({
         name: body.participant_name.trim(),
+        email: body.participant_email.trim(),
         has_paid: false,
       })
       .select()

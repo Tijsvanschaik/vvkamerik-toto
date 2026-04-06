@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 interface ParticipantWithPredictions {
   id: string;
   name: string;
+  email: string | null;
   has_paid: boolean;
   created_at: string;
   predictions: {
@@ -87,10 +88,15 @@ export default function PredictionsOverview({ token }: PredictionsOverviewProps)
                 }
                 className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50"
               >
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{participant.name}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="min-w-0">
+                    <span className="font-medium">{participant.name}</span>
+                    {participant.email && (
+                      <p className="text-xs text-gray-400 truncate">{participant.email}</p>
+                    )}
+                  </div>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
+                    className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
                       participant.has_paid
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"

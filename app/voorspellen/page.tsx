@@ -17,7 +17,9 @@ interface PredictionState {
 export default function VoorspellenPage() {
   const [settings, setSettings] = useState<PublicSettings | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [predictions, setPredictions] = useState<PredictionState[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -68,7 +70,13 @@ export default function VoorspellenPage() {
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = "Vul je naam in";
+    if (!firstName.trim()) newErrors.first_name = "Vul je voornaam in";
+    if (!lastName.trim()) newErrors.last_name = "Vul je achternaam in";
+    if (!email.trim()) {
+      newErrors.email = "Vul je e-mailadres in";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Vul een geldig e-mailadres in";
+    }
     predictions.forEach((pred, i) => {
       const h = parseInt(pred.predicted_home_goals);
       const a = parseInt(pred.predicted_away_goals);
@@ -91,7 +99,8 @@ export default function VoorspellenPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participant_name: name.trim(),
+          participant_name: `${firstName.trim()} ${lastName.trim()}`,
+          participant_email: email.trim(),
           predictions: predictions.map((pred, i) => ({
             match_id: matches[i].id,
             predicted_home_goals: parseInt(pred.predicted_home_goals),
@@ -155,7 +164,15 @@ export default function VoorspellenPage() {
                 Voorspel alle {matches.length} wedstrijden en kies een topscoorder.
                 {settings && <> Inleg: <strong>€{Number(settings.entry_fee).toFixed(2)}</strong>.</>}
               </p>
-              <ParticipantNameInput value={name} onChange={setName} error={errors.name} />
+              <ParticipantNameInput
+                firstName={firstName}
+                lastName={lastName}
+                email={email}
+                onFirstNameChange={setFirstName}
+                onLastNameChange={setLastName}
+                onEmailChange={setEmail}
+                errors={errors}
+              />
             </div>
 
             {errors.form && (
