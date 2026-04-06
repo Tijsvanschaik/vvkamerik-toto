@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --color-kamerik-green: #1b5e20;
+  --color-kamerik-green-light: #2e7d32;
+  --color-kamerik-green-dark: #0d3311;
+  --color-kamerik-white: #ffffff;
+  --color-kamerik-gold: #ffd600;
+  --color-kamerik-gold-dark: #c7a500;
+  --background: #f8faf8;
+  --foreground: #1a1a1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--color-kamerik-green);
+  --color-primary-light: var(--color-kamerik-green-light);
+  --color-primary-dark: var(--color-kamerik-green-dark);
+  --color-accent: var(--color-kamerik-gold);
+  --color-accent-dark: var(--color-kamerik-gold-dark);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.tv-mode {
+  --background: #0a1a0a;
+  --foreground: #f0f0f0;
+}

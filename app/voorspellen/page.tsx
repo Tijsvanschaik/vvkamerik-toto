@@ -1,0 +1,183 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import type { MatchWithTeams, PublicSettings } from "@/lib/types";
+import MatchPredictionCard from "@/components/form/MatchPredictionCard";
+import ParticipantNameInput from "@/components/form/ParticipantNameInput";
+import SubmitButton from "@/components/form/SubmitButton";
+import ClosedBanner from "@/components/form/ClosedBanner";
+import TikkieLink from "@/components/form/TikkieLink";
+
+interface PredictionState {
+  predicted_home_goals: string;
+  predicted_away_goals: string;
+  chosen_player_id: string;
+}
+
+export default function VoorspellenPage() {
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const [matches, setMatches] = useState<MatchWithTeams[]>([]);
+  const [name, setName] = useState("");
+  const [predictions, setPredictions] = useState<PredictionState[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [settingsRes, matchesRes] = await Promise.all([
+          fetch("/api/settings"),
+          fetch("/api/matches"),
+        ]);
+        if (settingsRes.ok) setSettings(await settingsRes.json());
+        if (matchesRes.ok) {
+          const matchData = await matchesRes.json();
+          setMatches(matchData);
+          setPredictions(
+            matchData.map(() => ({
+              predicted_home_goals: "",
+              predicted_away_goals: "",
+              chosen_player_id: "",
+            }))
+          );
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  function updatePrediction(index: number, field: string, value: string) {
+    setPredictions((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[`${index}_home`];
+      delete updated[`${index}_away`];
+      delete updated[`${index}_player`];
+      return updated;
+    });
+  }
+
+  function validate(): boolean {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) newErrors.name = "Vul je naam in";
+    predictions.forEach((pred, i) => {
+      const h = parseInt(pred.predicted_home_goals);
+      const a = parseInt(pred.predicted_away_goals);
+      if (pred.predicted_home_goals === "" || isNaN(h) || h < 0)
+        newErrors[`${i}_home`] = "Verplicht";
+      if (pred.predicted_away_goals === "" || isNaN(a) || a < 0)
+        newErrors[`${i}_away`] = "Verplicht";
+      if (!pred.chosen_player_id) newErrors[`${i}_player`] = "Kies een speler";
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/predictions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participant_name: name.trim(),
+          predictions: predictions.map((pred, i) => ({
+            match_id: matches[i].id,
+            predicted_home_goals: parseInt(pred.predicted_home_goals),
+            predicted_away_goals: parseInt(pred.predicted_away_goals),
+            chosen_player_id: pred.chosen_player_id,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErrors({ form: data.error }); return; }
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        window.location.href = `/confirmation?participant_id=${data.participant_id}`;
+      }
+    } catch {
+      setErrors({ form: "Er ging iets mis bij het versturen" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f0f4f0] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#1b5e20] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f0f4f0]">
+      <header className="bg-[#1b5e20] text-white shadow-lg">
+        <div className="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium transition-colors">
+            ← Terug naar dashboard
+          </a>
+          <a href="/admin" className="text-white/60 hover:text-white text-sm transition-colors">Admin</a>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 pb-8 text-center">
+          <h1 className="text-3xl font-black tracking-tight mb-1">VVKamerik Toto</h1>
+          <p className="text-green-200 text-sm">Voorspel de uitslagen en win prijzen!</p>
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        {settings && !settings.predictions_open ? (
+          <ClosedBanner />
+        ) : matches.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+            <p className="text-gray-400">Er zijn nog geen wedstrijden ingesteld.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Doe mee!</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Voorspel alle {matches.length} wedstrijden en kies een topscoorder.
+                {settings && <> Inleg: <strong>€{Number(settings.entry_fee).toFixed(2)}</strong>.</>}
+              </p>
+              <ParticipantNameInput value={name} onChange={setName} error={errors.name} />
+            </div>
+
+            {errors.form && (
+              <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm border border-red-100">
+                {errors.form}
+              </div>
+            )}
+
+            {matches.map((match, index) => (
+              <MatchPredictionCard
+                key={match.id}
+                match={match}
+                index={index}
+                prediction={predictions[index]}
+                onChange={(field, value) => updatePrediction(index, field, value)}
+                errors={errors}
+              />
+            ))}
+
+            {settings?.tikkie_url && <TikkieLink url={settings.tikkie_url} />}
+
+            <SubmitButton loading={submitting} entryFee={settings?.entry_fee ?? 5} />
+          </form>
+        )}
+      </main>
+    </div>
+  );
+}
