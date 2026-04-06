@@ -96,6 +96,12 @@ export async function GET() {
         home_win_pct: total > 0 ? Math.round((homeWin / total) * 100) : 0,
         draw_pct: total > 0 ? Math.round((draw / total) * 100) : 0,
         away_win_pct: total > 0 ? Math.round((awayWin / total) * 100) : 0,
+        avg_home_goals: total > 0
+          ? +((matchPreds as Prediction[]).reduce((s, p) => s + p.predicted_home_goals, 0) / total).toFixed(1)
+          : null,
+        avg_away_goals: total > 0
+          ? +((matchPreds as Prediction[]).reduce((s, p) => s + p.predicted_away_goals, 0) / total).toFixed(1)
+          : null,
         actual_home_goals: match.actual_home_goals,
         actual_away_goals: match.actual_away_goals,
         is_finished: match.is_finished,

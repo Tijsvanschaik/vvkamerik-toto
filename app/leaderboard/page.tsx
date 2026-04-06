@@ -67,7 +67,7 @@ function LeaderboardContent() {
           particleCount: 150,
           spread: 90,
           origin: { y: 0.4 },
-          colors: ["#1b5e20", "#ffd600", "#ffffff"],
+          colors: ["#1e3a8a", "#93c5fd", "#ffffff"],
         });
       });
     }
@@ -126,7 +126,7 @@ function LeaderboardContent() {
       <main className={`mx-auto px-4 py-6 space-y-8 ${tvMode ? "max-w-6xl" : "max-w-4xl"}`}>
         {tvMode && (
           <div className="text-center pt-4">
-            <h1 className="text-4xl font-bold text-green-400">VVKamerik Toto</h1>
+            <h1 className="text-4xl font-bold text-blue-300">VV Kamerik Toto</h1>
           </div>
         )}
 
@@ -192,7 +192,7 @@ function LeaderboardContent() {
         )}
 
         <section>
-          <h2 className={`font-bold mb-4 ${tvMode ? "text-2xl text-green-300" : "text-xl"}`}>
+          <h2 className={`font-bold mb-4 ${tvMode ? "text-2xl text-blue-300" : "text-xl"}`}>
             Ranglijst
           </h2>
           <LeaderboardTable entries={data.leaderboard} tvMode={tvMode} />
@@ -202,7 +202,7 @@ function LeaderboardContent() {
           <section className="text-center pb-8">
             <button
               onClick={handleShare}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors text-sm"
+              className="bg-[#1e3a8a] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#2d4fa8] transition-colors text-sm"
             >
               Deel je score
             </button>

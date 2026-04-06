@@ -87,7 +87,7 @@ function ConfirmationContent() {
       {participant.has_paid ? (
         <>
           <div className="text-6xl">🎉</div>
-          <h2 className="text-2xl font-bold text-green-700">
+          <h2 className="text-2xl font-bold text-[#1e3a8a]">
             Betaling ontvangen!
           </h2>
           <p className="text-lg text-gray-700">
@@ -116,7 +116,7 @@ function ConfirmationContent() {
       <div className="flex justify-center gap-4 pt-4">
         <a
           href="/"
-          className="bg-[#1b5e20] text-white px-6 py-2 rounded-xl font-medium hover:bg-[#2e7d32] transition-colors"
+          className="bg-[#1e3a8a] text-white px-6 py-2 rounded-xl font-medium hover:bg-[#2d4fa8] transition-colors"
         >
           Naar het dashboard
         </a>

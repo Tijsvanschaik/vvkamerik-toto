@@ -8,90 +8,85 @@ interface RankingTableProps {
   entries: LeaderboardEntry[];
 }
 
-const RANK_COLORS: Record<number, string> = {
-  1: "text-yellow-500",
-  2: "text-gray-400",
-  3: "text-amber-700",
+const rankColor = (rank: number) => {
+  if (rank === 1) return "text-yellow-500";
+  if (rank === 2) return "text-gray-400";
+  if (rank === 3) return "text-amber-700";
+  return "text-gray-300";
 };
 
 export default function RankingTable({ entries }: RankingTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (entries.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="bg-[#1b5e20] px-5 py-4 flex items-center gap-2">
-          <span className="text-xl">📈</span>
-          <h2 className="text-white font-bold text-lg tracking-wide">Ranglijst</h2>
-        </div>
-        <div className="py-12 text-center text-gray-400">
-          <p>Het leaderboard is beschikbaar zodra de eerste wedstrijd is gespeeld.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div className="bg-[#1b5e20] px-5 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">📈</span>
-          <h2 className="text-white font-bold text-lg tracking-wide">Ranglijst</h2>
-        </div>
-        <span className="text-green-200 text-sm">{entries.length} deelnemers</span>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 pt-6 pb-4 border-b border-gray-50">
+        <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-0.5">
+          Standen
+        </p>
+        <h2 className="text-xl font-bold text-gray-900">Ranglijst</h2>
       </div>
 
-      <div className="divide-y divide-gray-50">
-        {entries.map((entry) => (
-          <div key={entry.participant_id}>
-            <button
-              onClick={() =>
-                setExpandedId(
-                  expandedId === entry.participant_id ? null : entry.participant_id
-                )
-              }
-              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors text-left"
-            >
-              <span
-                className={`text-base font-black w-7 text-center flex-shrink-0 ${
-                  RANK_COLORS[entry.rank] ?? "text-gray-300"
-                }`}
+      {entries.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <p className="text-base text-gray-400">
+            De ranglijst is zichtbaar zodra de eerste wedstrijd is gespeeld.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {entries.map((entry) => (
+            <div key={entry.participant_id}>
+              <button
+                onClick={() =>
+                  setExpandedId(
+                    expandedId === entry.participant_id ? null : entry.participant_id
+                  )
+                }
+                className="w-full flex items-center gap-3 px-6 py-4 hover:bg-gray-50/60 transition-colors text-left"
               >
-                {entry.rank}
-              </span>
+                {/* Rank */}
+                <span className={`text-sm font-black w-6 text-center flex-shrink-0 ${rankColor(entry.rank)}`}>
+                  {entry.rank}
+                </span>
 
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{entry.participant_name}</p>
-              </div>
+                {/* Name */}
+                <span className="flex-1 font-semibold text-gray-900 truncate min-w-0 text-base">
+                  {entry.participant_name}
+                </span>
 
-              <div className="flex items-center gap-3 flex-shrink-0">
-                {entry.has_paid ? (
-                  <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
-                    ✓ betaald
-                  </span>
-                ) : (
-                  <span className="text-xs text-red-400 font-medium bg-red-50 px-2 py-0.5 rounded-full">
-                    ✗
-                  </span>
-                )}
-                <span className="text-lg font-black text-[#1b5e20] min-w-[3rem] text-right">
+                {/* Payment badge */}
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    entry.has_paid
+                      ? "bg-green-50 text-green-600"
+                      : "bg-red-50 text-red-400"
+                  }`}
+                >
+                  {entry.has_paid ? "betaald" : "open"}
+                </span>
+
+                {/* Points */}
+                <span className="font-black text-[#1e3a8a] tabular-nums text-base min-w-[3rem] text-right flex-shrink-0">
                   {entry.total_points}
                   <span className="text-xs font-normal text-gray-400 ml-0.5">pt</span>
                 </span>
-                <span className="text-gray-300 text-xs">
+
+                {/* Expand indicator */}
+                <span className="text-gray-300 text-xs flex-shrink-0">
                   {expandedId === entry.participant_id ? "▲" : "▼"}
                 </span>
-              </div>
-            </button>
+              </button>
 
-            {expandedId === entry.participant_id && (
-              <div className="bg-gray-50 border-t border-gray-100">
-                <ParticipantDetail matchPoints={entry.match_points} />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              {expandedId === entry.participant_id && (
+                <div className="bg-gray-50 border-t border-gray-100">
+                  <ParticipantDetail matchPoints={entry.match_points} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

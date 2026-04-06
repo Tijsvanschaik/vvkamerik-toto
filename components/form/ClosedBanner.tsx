@@ -13,7 +13,7 @@ export default function ClosedBanner() {
       </p>
       <a
         href="/"
-        className="inline-block mt-4 bg-[#1b5e20] text-white px-6 py-2 rounded-xl font-medium hover:bg-[#2e7d32] transition-colors"
+        className="inline-block mt-4 bg-[#1e3a8a] text-white px-6 py-2 rounded-xl font-medium hover:bg-[#2d4fa8] transition-colors"
       >
         Bekijk het dashboard
       </a>

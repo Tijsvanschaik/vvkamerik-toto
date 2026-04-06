@@ -116,24 +116,27 @@ export default function VoorspellenPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f0f4f0] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#1b5e20] border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#1e3a8a] border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f4f0]">
-      <header className="bg-[#1b5e20] text-white shadow-lg">
-        <div className="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-[#1e3a8a] text-white shadow-sm">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium transition-colors">
-            ← Terug naar dashboard
+            ← Dashboard
           </a>
-          <a href="/admin" className="text-white/60 hover:text-white text-sm transition-colors">Admin</a>
-        </div>
-        <div className="max-w-2xl mx-auto px-4 pb-8 text-center">
-          <h1 className="text-3xl font-black tracking-tight mb-1">VVKamerik Toto</h1>
-          <p className="text-green-200 text-sm">Voorspel de uitslagen en win prijzen!</p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white flex flex-col items-center justify-center">
+              <span className="text-[10px] font-black leading-none text-[#1e3a8a]">VV</span>
+              <span className="text-[7px] font-bold leading-none tracking-widest text-blue-400 uppercase">VVK</span>
+            </div>
+            <span className="font-black text-base tracking-tight">VV Kamerik Toto</span>
+          </div>
+          <a href="/admin" className="text-blue-300 hover:text-white text-sm font-medium transition-colors">Admin</a>
         </div>
       </header>
 
