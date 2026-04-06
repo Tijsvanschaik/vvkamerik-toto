@@ -24,14 +24,14 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "teams", label: "Teams" },
   { id: "players", label: "Spelers" },
   { id: "matches", label: "Wedstrijden" },
-  { id: "results", label: "Uitslagen" },
+  { id: "results", label: "Live uitslagen" },
   { id: "predictions", label: "Inzendingen" },
   { id: "reset", label: "Reset" },
 ];
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("settings");
+  const [activeTab, setActiveTab] = useState<Tab>("results");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
