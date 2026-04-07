@@ -41,12 +41,18 @@ function CrowdBar({
   drawPct,
   awayPct,
   total,
+  kamerikIsHome,
 }: {
   homePct: number;
   drawPct: number;
   awayPct: number;
   total: number;
+  kamerikIsHome: boolean;
 }) {
+  // Always show Kamerik on the left
+  const kamerikPct = kamerikIsHome ? homePct : awayPct;
+  const opponentPct = kamerikIsHome ? awayPct : homePct;
+
   if (total === 0) {
     return (
       <div className="h-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -56,14 +62,15 @@ function CrowdBar({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
+      {/* Bar: Kamerik | Gelijk | Tegenstander */}
       <div className="flex h-4 rounded-full overflow-hidden text-[10px] font-bold text-white">
-        {homePct > 0 && (
+        {kamerikPct > 0 && (
           <div
             className="bg-[#1e3a8a] flex items-center justify-center transition-all duration-500"
-            style={{ width: `${homePct}%` }}
+            style={{ width: `${kamerikPct}%` }}
           >
-            {homePct >= 14 && `${homePct}%`}
+            {kamerikPct >= 14 && `${kamerikPct}%`}
           </div>
         )}
         {drawPct > 0 && (
@@ -74,28 +81,30 @@ function CrowdBar({
             {drawPct >= 14 && `${drawPct}%`}
           </div>
         )}
-        {awayPct > 0 && (
+        {opponentPct > 0 && (
           <div
-            className="bg-blue-300 flex items-center justify-center transition-all duration-500"
-            style={{ width: `${awayPct}%` }}
+            className="bg-slate-400 flex items-center justify-center transition-all duration-500"
+            style={{ width: `${opponentPct}%` }}
           >
-            {awayPct >= 14 && `${awayPct}%`}
+            {opponentPct >= 14 && `${opponentPct}%`}
           </div>
         )}
       </div>
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span className="flex items-center gap-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a] inline-block" />
-          {homePct}%
-        </span>
-        <span className="flex items-center gap-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block" />
-          {drawPct}%
-        </span>
-        <span className="flex items-center gap-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-300 inline-block" />
-          {awayPct}%
-        </span>
+
+      {/* Labels */}
+      <div className="grid grid-cols-3 text-center text-[10px]">
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-gray-400">Kamerik</span>
+          <span className="font-bold text-[#1e3a8a]">{kamerikPct}%</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-gray-400">Gelijk</span>
+          <span className="font-bold text-gray-500">{drawPct}%</span>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-gray-400">Tegenstander</span>
+          <span className="font-bold text-slate-500">{opponentPct}%</span>
+        </div>
       </div>
     </div>
   );
@@ -128,6 +137,7 @@ function MatchCard({ match }: { match: MatchCardData }) {
   const opponent = getOpponent(match);
   const score = getKamerikScore(match);
   const avgScore = getAvgKamerikScore(match);
+  const kamerikIsHome = match.home_team_name === match.kamerik_team_name;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
@@ -158,6 +168,7 @@ function MatchCard({ match }: { match: MatchCardData }) {
         drawPct={match.draw_pct}
         awayPct={match.away_win_pct}
         total={match.total}
+        kamerikIsHome={kamerikIsHome}
       />
 
       {/* Avg prediction */}
