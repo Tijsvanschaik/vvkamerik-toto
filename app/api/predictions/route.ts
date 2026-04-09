@@ -34,18 +34,31 @@ export async function POST(request: NextRequest) {
 
     const { data: matches } = await supabaseAdmin
       .from("matches")
-      .select("id")
+      .select("id, is_cancelled")
       .order("match_order");
 
     if (!matches) {
       return Response.json({ error: "Geen wedstrijden gevonden" }, { status: 404 });
     }
 
-    if (body.predictions.length !== matches.length) {
+    const activeMatches = matches.filter((m) => !m.is_cancelled);
+
+    if (body.predictions.length !== activeMatches.length) {
       return Response.json(
-        { error: `Je moet alle ${matches.length} wedstrijden invullen` },
+        { error: `Je moet alle ${activeMatches.length} wedstrijden invullen` },
         { status: 400 }
       );
+    }
+
+    // Zorg dat niemand een voorspelling instuurt voor een afgelaste wedstrijd
+    const cancelledIds = new Set(matches.filter((m) => m.is_cancelled).map((m) => m.id));
+    for (const pred of body.predictions) {
+      if (cancelledIds.has(pred.match_id)) {
+        return Response.json(
+          { error: "Je kunt geen voorspelling doen voor een afgelaste wedstrijd" },
+          { status: 400 }
+        );
+      }
     }
 
     for (const pred of body.predictions) {
