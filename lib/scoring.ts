@@ -11,6 +11,7 @@ import type {
 interface MatchWithTeamNames extends Match {
   home_team_name: string;
   away_team_name: string;
+  // is_cancelled and cancelled_reason already inherited from Match
 }
 
 interface ScoringInput {
@@ -56,6 +57,8 @@ export function calculateMatchPoints(
     match_order: match.match_order,
     home_team_name: match.home_team_name,
     away_team_name: match.away_team_name,
+    is_cancelled: match.is_cancelled,
+    cancelled_reason: match.cancelled_reason ?? null,
     predicted_home_goals: prediction.predicted_home_goals,
     predicted_away_goals: prediction.predicted_away_goals,
     actual_home_goals: match.actual_home_goals,
@@ -70,6 +73,13 @@ export function calculateMatchPoints(
     points_topscorer: 0,
     total: 0,
   };
+
+  // Afgelaste wedstrijd: iedereen krijgt 0 punten (standings blijven eerlijk)
+  if (match.is_cancelled) {
+    result.is_cancelled = true;
+    result.cancelled_reason = match.cancelled_reason ?? null;
+    return result;
+  }
 
   if (!match.is_finished || match.actual_home_goals == null || match.actual_away_goals == null) {
     return result;

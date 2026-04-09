@@ -44,6 +44,8 @@ export interface Match {
   actual_home_goals: number | null;
   actual_away_goals: number | null;
   is_finished: boolean;
+  is_cancelled: boolean;
+  cancelled_reason: string | null;
   created_at: string;
 }
 
@@ -103,6 +105,8 @@ export interface MatchPointBreakdown {
   match_order: number;
   home_team_name: string;
   away_team_name: string;
+  is_cancelled?: boolean;
+  cancelled_reason?: string | null;
   predicted_home_goals: number;
   predicted_away_goals: number;
   actual_home_goals: number | null;

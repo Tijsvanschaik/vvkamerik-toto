@@ -52,8 +52,9 @@ export async function GET() {
     }));
 
     // --- Leaderboard ---
-    const hasFinished = matches.some((m) => m.is_finished);
-    const allFinished = matches.every((m) => m.is_finished);
+    const activeMathces = matches.filter((m) => !m.is_cancelled);
+    const hasFinished = activeMathces.some((m) => m.is_finished);
+    const allFinished = activeMathces.length > 0 && activeMathces.every((m) => m.is_finished);
 
     const leaderboard = hasFinished
       ? calculateLeaderboard({
@@ -105,6 +106,8 @@ export async function GET() {
         actual_home_goals: match.actual_home_goals,
         actual_away_goals: match.actual_away_goals,
         is_finished: match.is_finished,
+        is_cancelled: match.is_cancelled ?? false,
+        cancelled_reason: match.cancelled_reason ?? null,
       };
     });
 
@@ -163,6 +166,8 @@ export async function GET() {
         actual_home_goals: m.actual_home_goals,
         actual_away_goals: m.actual_away_goals,
         is_finished: m.is_finished,
+        is_cancelled: m.is_cancelled ?? false,
+        cancelled_reason: m.cancelled_reason ?? null,
       })),
       settings: {
         entry_fee: settingsData.entry_fee,

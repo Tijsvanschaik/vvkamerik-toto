@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { MatchWithTeams, PublicSettings } from "@/lib/types";
 
-function InstructionsCard({ s }: { s: PublicSettings }) {
+function InstructionsCard({ s, matchCount }: { s: PublicSettings; matchCount: number }) {
   const [open, setOpen] = useState(false);
   const fmt = (n: number) =>
     new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -32,7 +32,7 @@ function InstructionsCard({ s }: { s: PublicSettings }) {
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-2">Hoe doe je mee?</p>
             <ol className="space-y-1.5 text-sm text-gray-600">
               <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">1.</span>Vul je naam en e-mailadres in</li>
-              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">2.</span>Voorspel de uitslag van alle {5} wedstrijden</li>
+              <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">2.</span>Voorspel de uitslag van alle {matchCount} wedstrijden</li>
               <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">3.</span>Kies per wedstrijd een topscoorder uit het VVKamerik-elftal</li>
               <li className="flex gap-2"><span className="font-bold text-[#1e3a8a] w-4 flex-shrink-0">4.</span>Betaal de inleg van <strong>€{Number(s.entry_fee).toFixed(2)}</strong> via iDEAL</li>
             </ol>
@@ -105,6 +105,7 @@ interface PredictionState {
 export default function VoorspellenPage() {
   const [settings, setSettings] = useState<PublicSettings | null>(null);
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
+  const [cancelledCount, setCancelledCount] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -122,10 +123,12 @@ export default function VoorspellenPage() {
         ]);
         if (settingsRes.ok) setSettings(await settingsRes.json());
         if (matchesRes.ok) {
-          const matchData = await matchesRes.json();
-          setMatches(matchData);
+          const allMatches: MatchWithTeams[] = await matchesRes.json();
+          const activeMatches = allMatches.filter((m) => !m.is_cancelled);
+          setCancelledCount(allMatches.length - activeMatches.length);
+          setMatches(activeMatches);
           setPredictions(
-            matchData.map(() => ({
+            activeMatches.map(() => ({
               predicted_home_goals: "",
               predicted_away_goals: "",
               chosen_player_id: "",
@@ -249,7 +252,7 @@ export default function VoorspellenPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-1">Doe mee!</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Voorspel alle {matches.length} wedstrijden en kies een topscoorder.
+                Voorspel {matches.length === 1 ? "de" : "alle"} {matches.length} wedstrijd{matches.length !== 1 ? "en" : ""} en kies een topscoorder.
                 {settings && <> Inleg: <strong>€{Number(settings.entry_fee).toFixed(2)}</strong>.</>}
               </p>
               <ParticipantNameInput
@@ -263,11 +266,25 @@ export default function VoorspellenPage() {
               />
             </div>
 
-            {settings && <InstructionsCard s={settings} />}
+            {settings && <InstructionsCard s={settings} matchCount={matches.length} />}
 
             {errors.form && (
               <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm border border-red-100">
                 {errors.form}
+              </div>
+            )}
+
+            {cancelledCount > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-start gap-3">
+                <span className="text-lg leading-none mt-0.5">🚫</span>
+                <div>
+                  <p className="text-sm font-semibold text-orange-800">
+                    {cancelledCount === 1 ? "1 wedstrijd is afgelast" : `${cancelledCount} wedstrijden zijn afgelast`}
+                  </p>
+                  <p className="text-xs text-orange-600 mt-0.5">
+                    De afgelaste {cancelledCount === 1 ? "wedstrijd telt" : "wedstrijden tellen"} niet mee — je hoeft er geen voorspelling voor in te vullen.
+                  </p>
+                </div>
               </div>
             )}
 

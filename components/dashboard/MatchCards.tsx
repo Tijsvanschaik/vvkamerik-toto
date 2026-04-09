@@ -15,6 +15,8 @@ export interface MatchCardData {
   actual_home_goals: number | null;
   actual_away_goals: number | null;
   is_finished: boolean;
+  is_cancelled: boolean;
+  cancelled_reason: string | null;
 }
 
 interface MatchCardsProps {
@@ -138,6 +140,32 @@ function MatchCard({ match }: { match: MatchCardData }) {
   const score = getKamerikScore(match);
   const avgScore = getAvgKamerikScore(match);
   const kamerikIsHome = match.home_team_name === match.kamerik_team_name;
+
+  if (match.is_cancelled) {
+    return (
+      <div className="bg-orange-50 rounded-2xl border border-orange-200 p-5 flex flex-col gap-3 opacity-80">
+        <div className="text-center">
+          <p className="text-lg font-black text-[#1e3a8a] leading-tight">
+            {match.kamerik_team_name}
+          </p>
+          <p className="text-base text-gray-400 mt-0.5">vs {opponent}</p>
+        </div>
+        <div className="text-center">
+          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+            🚫 Afgelast
+          </span>
+        </div>
+        {match.cancelled_reason && (
+          <p className="text-xs text-orange-500 text-center leading-relaxed">
+            {match.cancelled_reason}
+          </p>
+        )}
+        <p className="text-[10px] text-gray-400 text-center">
+          Iedereen krijgt 0 punten voor dit duel
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">

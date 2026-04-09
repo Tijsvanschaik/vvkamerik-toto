@@ -13,6 +13,7 @@ interface ScorerInput {
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+type CancelStatus = "idle" | "saving" | "done" | "error";
 
 interface MatchState {
   homeGoals: number;
@@ -22,6 +23,11 @@ interface MatchState {
   status: SaveStatus;
   errorMsg: string;
   isFinished: boolean;
+  isCancelled: boolean;
+  cancelledReason: string;
+  cancelStatus: CancelStatus;
+  cancelErrorMsg: string;
+  showCancelConfirm: boolean;
   dirty: boolean;
 }
 
@@ -64,6 +70,11 @@ export default function ResultEntry({ token }: ResultEntryProps) {
             status: "idle",
             errorMsg: "",
             isFinished: match.is_finished,
+            isCancelled: match.is_cancelled ?? false,
+            cancelledReason: match.cancelled_reason ?? "",
+            cancelStatus: "idle",
+            cancelErrorMsg: "",
+            showCancelConfirm: false,
             dirty: false,
           };
         })
@@ -80,10 +91,10 @@ export default function ResultEntry({ token }: ResultEntryProps) {
     fetchAll();
   }, [fetchAll]);
 
-  function patchState(matchId: string, patch: Partial<MatchState>) {
+  function patchState(matchId: string, patch: Partial<MatchState>, markDirty = true) {
     setStates((prev) => ({
       ...prev,
-      [matchId]: { ...prev[matchId], ...patch, dirty: true },
+      [matchId]: { ...prev[matchId], ...patch, ...(markDirty ? { dirty: true } : {}) },
     }));
   }
 
@@ -114,6 +125,52 @@ export default function ResultEntry({ token }: ResultEntryProps) {
       return { ...s, player_id: value as string };
     });
     patchState(matchId, { scorers: updated });
+  }
+
+  async function handleCancel(matchId: string, cancel: boolean) {
+    const cur = states[matchId];
+    setStates((prev) => ({
+      ...prev,
+      [matchId]: { ...prev[matchId], cancelStatus: "saving", cancelErrorMsg: "", showCancelConfirm: false },
+    }));
+
+    try {
+      const res = await fetch(`/api/admin/matches/${matchId}/cancel`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          is_cancelled: cancel,
+          cancelled_reason: cancel ? cur.cancelledReason : null,
+        }),
+      });
+
+      if (res.ok) {
+        setStates((prev) => ({
+          ...prev,
+          [matchId]: { ...prev[matchId], isCancelled: cancel, cancelStatus: "done" },
+        }));
+        setTimeout(() =>
+          setStates((prev) => ({
+            ...prev,
+            [matchId]: { ...prev[matchId], cancelStatus: "idle" },
+          })), 2500
+        );
+      } else {
+        const data = await res.json();
+        setStates((prev) => ({
+          ...prev,
+          [matchId]: { ...prev[matchId], cancelStatus: "error", cancelErrorMsg: data.error || "Fout" },
+        }));
+      }
+    } catch {
+      setStates((prev) => ({
+        ...prev,
+        [matchId]: { ...prev[matchId], cancelStatus: "error", cancelErrorMsg: "Er ging iets mis" },
+      }));
+    }
   }
 
   async function handleSave(matchId: string) {
@@ -212,7 +269,9 @@ export default function ResultEntry({ token }: ResultEntryProps) {
             <div
               key={match.id}
               className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-                s.isFinished
+                s.isCancelled
+                  ? "border-orange-300 opacity-70"
+                  : s.isFinished
                   ? "border-green-200"
                   : s.dirty
                   ? "border-[#1e3a8a]/30"
@@ -222,29 +281,123 @@ export default function ResultEntry({ token }: ResultEntryProps) {
               {/* Card header */}
               <div className="px-5 pt-4 pb-3 border-b border-gray-50 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-gray-900">{kamerikName}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-900">{kamerikName}</p>
+                    {s.isCancelled && (
+                      <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                        Afgelast
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-400">vs {opponentName}</p>
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="text-sm text-gray-500">Afgelopen</span>
-                  <button
-                    type="button"
-                    onClick={() => patchState(match.id, { isFinished: !s.isFinished })}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${
-                      s.isFinished ? "bg-green-500" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        s.isFinished ? "translate-x-5" : ""
-                      }`}
-                    />
-                  </button>
-                </label>
+                <div className="flex items-center gap-3">
+                  {!s.isCancelled && (
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <span className="text-sm text-gray-500">Afgelopen</span>
+                      <button
+                        type="button"
+                        onClick={() => patchState(match.id, { isFinished: !s.isFinished })}
+                        className={`relative w-10 h-5 rounded-full transition-colors ${
+                          s.isFinished ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                            s.isFinished ? "translate-x-5" : ""
+                          }`}
+                        />
+                      </button>
+                    </label>
+                  )}
+                  {/* Cancel toggle button */}
+                  {!s.isCancelled ? (
+                    <button
+                      type="button"
+                      onClick={() => patchState(match.id, { showCancelConfirm: true }, false)}
+                      className="text-xs text-orange-500 hover:text-orange-700 font-semibold transition-colors"
+                      title="Markeer als afgelast"
+                    >
+                      Afgelasten
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleCancel(match.id, false)}
+                      disabled={s.cancelStatus === "saving"}
+                      className="text-xs text-green-600 hover:text-green-800 font-semibold transition-colors"
+                    >
+                      {s.cancelStatus === "saving" ? "..." : "Herstellen"}
+                    </button>
+                  )}
+                </div>
               </div>
 
+              {/* Cancel confirmation dialog */}
+              {s.showCancelConfirm && (
+                <div className="px-5 py-4 bg-orange-50 border-b border-orange-100">
+                  <p className="text-sm font-semibold text-orange-800 mb-2">
+                    Wedstrijd afgelasten?
+                  </p>
+                  <p className="text-xs text-orange-600 mb-3">
+                    Iedereen krijgt 0 punten voor deze wedstrijd — onderlinge standen blijven eerlijk.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Reden (optioneel, bijv. slechte weersomstandigheden)"
+                    value={s.cancelledReason}
+                    onChange={(e) => setStates((prev) => ({
+                      ...prev,
+                      [match.id]: { ...prev[match.id], cancelledReason: e.target.value },
+                    }))}
+                    className="w-full mb-3 px-3 py-2 text-sm border border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none bg-white"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleCancel(match.id, true)}
+                      className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-xl transition-colors"
+                    >
+                      Ja, afgelasten
+                    </button>
+                    <button
+                      onClick={() => patchState(match.id, { showCancelConfirm: false }, false)}
+                      className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-xl transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Cancel status feedback */}
+              {s.cancelStatus === "done" && (
+                <div className="px-5 py-2 bg-orange-50 text-xs text-orange-700 font-semibold">
+                  {s.isCancelled ? "✓ Wedstrijd gemarkeerd als afgelast" : "✓ Wedstrijd hersteld"}
+                </div>
+              )}
+              {s.cancelStatus === "error" && (
+                <div className="px-5 py-2 bg-red-50 text-xs text-red-600 font-semibold">
+                  {s.cancelErrorMsg}
+                </div>
+              )}
+
+              {/* Cancelled overlay message */}
+              {s.isCancelled && (
+                <div className="px-5 py-6 text-center">
+                  <div className="text-3xl mb-2">🚫</div>
+                  <p className="font-bold text-orange-700">Afgelast</p>
+                  {s.cancelledReason && (
+                    <p className="text-sm text-orange-500 mt-1">{s.cancelledReason}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-2">
+                    Iedereen krijgt 0 punten voor deze wedstrijd.
+                    <br />Klik op &quot;Herstellen&quot; om de wedstrijd terug te zetten.
+                  </p>
+                </div>
+              )}
+
               {/* Score row */}
-              <div className="px-5 py-5">
+              <div className={`px-5 py-5 ${s.isCancelled ? "hidden" : ""}`}>
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-3 text-center">
                   Stand
                 </p>
@@ -316,7 +469,7 @@ export default function ResultEntry({ token }: ResultEntryProps) {
               </div>
 
               {/* Scorers */}
-              <div className="px-5 pb-4 border-t border-gray-50 pt-4">
+              <div className={`px-5 pb-4 border-t border-gray-50 pt-4 ${s.isCancelled ? "hidden" : ""}`}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs uppercase tracking-widest font-semibold text-gray-400">
                     Scorers ({kamerikName})
@@ -375,7 +528,7 @@ export default function ResultEntry({ token }: ResultEntryProps) {
               </div>
 
               {/* Save button */}
-              <div className="px-5 pb-5">
+              <div className={`px-5 pb-5 ${s.isCancelled ? "hidden" : ""}`}>
                 {s.errorMsg && (
                   <p className="text-sm text-red-600 mb-2">{s.errorMsg}</p>
                 )}
