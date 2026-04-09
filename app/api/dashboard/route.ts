@@ -112,19 +112,31 @@ export async function GET() {
     });
 
     // --- Doelpuntenmakers (meest gekozen spelers) ---
+    // Afgelaste wedstrijden worden uitgesloten: stemmen én goals tellen niet mee
+    const cancelledMatchIds = new Set(
+      matches.filter((m) => m.is_cancelled).map((m) => m.id)
+    );
+
     const playerVoteCounts: Record<string, number> = {};
     for (const pred of safePredictions as Prediction[]) {
       if (!pred.chosen_player_id) continue;
+      if (cancelledMatchIds.has(pred.match_id)) continue;
       playerVoteCounts[pred.chosen_player_id] =
         (playerVoteCounts[pred.chosen_player_id] ?? 0) + 1;
     }
+
+    // Only count goals from non-cancelled matches
+    const activeScorers = (safeScorers as MatchScorer[]).filter(
+      (s) => !cancelledMatchIds.has(s.match_id)
+    );
+
     const playerVoteStats = Object.entries(playerVoteCounts)
       .map(([playerId, count]) => ({
         player_id: playerId,
         player_name: playerNames[playerId] ?? "Onbekend",
         team_name: playerTeam[playerId] ?? "",
         vote_count: count,
-        actual_goals: (safeScorers as MatchScorer[])
+        actual_goals: activeScorers
           .filter((s) => s.player_id === playerId)
           .reduce((sum, s) => sum + s.goals, 0),
       }))
