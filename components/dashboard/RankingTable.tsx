@@ -132,7 +132,7 @@ export default function RankingTable({ entries }: RankingTableProps) {
               <div key={entry.participant_id}>
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : entry.participant_id)}
-                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors text-left"
+                  className="w-full flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/60 transition-colors text-left"
                 >
                   {/* Rank badge */}
                   <div className={`w-7 h-7 rounded-lg border flex items-center justify-center flex-shrink-0 ${isTop3 ? rankBg(entry.rank) : "bg-gray-50 border-gray-100"}`}>
@@ -141,29 +141,33 @@ export default function RankingTable({ entries }: RankingTableProps) {
                     </span>
                   </div>
 
-                  {/* Name + pills (hidden when expanded) */}
-                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-900 text-sm shrink-0">
+                  {/* Name + pills stacked */}
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-gray-900 text-sm truncate block">
                       {entry.participant_name}
                     </span>
-                    {!isExpanded && sorted.map((mp) => (
-                      <span
-                        key={mp.match_id}
-                        title={pillTitle(mp)}
-                        className={`inline-flex items-center justify-center rounded-md text-[11px] font-bold px-2 py-0.5 tabular-nums cursor-default ${pillStyle(mp)}`}
-                      >
-                        {mp.is_cancelled ? "🚫" : mp.actual_home_goals == null ? "–" : `${mp.total}`}
-                      </span>
-                    ))}
+                    {!isExpanded && sorted.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {sorted.map((mp) => (
+                          <span
+                            key={mp.match_id}
+                            title={pillTitle(mp)}
+                            className={`inline-flex items-center justify-center rounded-md text-[11px] font-bold px-2 py-0.5 tabular-nums cursor-default ${pillStyle(mp)}`}
+                          >
+                            {mp.is_cancelled ? "🚫" : mp.actual_home_goals == null ? "–" : `${mp.total}`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Total points */}
-                  <span className="font-black text-[#1e3a8a] tabular-nums text-base flex-shrink-0">
+                  <span className="font-black text-[#1e3a8a] tabular-nums text-sm sm:text-base flex-shrink-0">
                     {entry.total_points}
                     <span className="text-xs font-normal text-gray-400 ml-0.5">pt</span>
                   </span>
 
-                  <span className="text-gray-300 text-xs flex-shrink-0 w-3">
+                  <span className="text-gray-300 text-xs flex-shrink-0">
                     {isExpanded ? "▲" : "▼"}
                   </span>
                 </button>

@@ -15,38 +15,38 @@ const CONFIGS = [
   {
     prizeKey: "prize_1st" as const,
     medal: "🥇",
-    label: "1e",
     gradient: "from-yellow-400 to-amber-500",
     ring: "ring-yellow-300",
     bg: "bg-gradient-to-br from-yellow-50 to-amber-50",
     border: "border-yellow-200",
     textPts: "text-yellow-600",
-    size: "scale-100",
     offset: "mt-0",
+    ptSize: "text-xl sm:text-2xl",
+    nameSize: "text-sm sm:text-base",
   },
   {
     prizeKey: "prize_2nd" as const,
     medal: "🥈",
-    label: "2e",
     gradient: "from-gray-300 to-gray-400",
     ring: "ring-gray-200",
     bg: "bg-gradient-to-br from-gray-50 to-slate-50",
     border: "border-gray-200",
     textPts: "text-gray-500",
-    size: "scale-95",
-    offset: "mt-4",
+    offset: "mt-3 sm:mt-4",
+    ptSize: "text-lg sm:text-xl",
+    nameSize: "text-xs sm:text-sm",
   },
   {
     prizeKey: "prize_3rd" as const,
     medal: "🥉",
-    label: "3e",
     gradient: "from-amber-600 to-amber-700",
     ring: "ring-amber-200",
     bg: "bg-gradient-to-br from-amber-50 to-orange-50",
     border: "border-amber-200",
     textPts: "text-amber-700",
-    size: "scale-90",
-    offset: "mt-6",
+    offset: "mt-5 sm:mt-6",
+    ptSize: "text-lg sm:text-xl",
+    nameSize: "text-xs sm:text-sm",
   },
 ];
 
@@ -78,48 +78,40 @@ export default function PodiumSection({ top3, prizes, allFinished }: PodiumSecti
 
             if (!entry) return <div key={dataIdx} className="flex-1 max-w-[160px]" />;
 
-            const isFirst = dataIdx === 0;
-
             return (
               <div
                 key={entry.participant_id}
-                className={`flex-1 max-w-[160px] flex flex-col items-center ${cfg.offset}`}
+                className={`flex-1 min-w-0 flex flex-col items-center ${cfg.offset}`}
               >
                 {/* Medal badge */}
                 <div
-                  className={`w-10 h-10 rounded-full bg-gradient-to-br ${cfg.gradient} ring-2 ${cfg.ring} flex items-center justify-center mb-2 shadow-sm`}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br ${cfg.gradient} ring-2 ${cfg.ring} flex items-center justify-center mb-1.5 shadow-sm flex-shrink-0`}
                 >
-                  <span className="text-xl leading-none">{cfg.medal}</span>
+                  <span className="text-base sm:text-xl leading-none">{cfg.medal}</span>
                 </div>
 
                 {/* Card */}
                 <div
-                  className={`w-full rounded-2xl border ${cfg.border} ${cfg.bg} px-3 py-3 text-center shadow-sm ${
-                    isFirst ? "shadow-md" : ""
-                  }`}
+                  className={`w-full rounded-xl border ${cfg.border} ${cfg.bg} px-2 py-2 sm:px-3 sm:py-3 text-center shadow-sm`}
                 >
-                  <p
-                    className={`font-black truncate text-gray-900 leading-tight ${
-                      isFirst ? "text-base" : "text-sm"
-                    }`}
-                  >
+                  <p className={`font-black truncate text-gray-900 leading-tight ${cfg.nameSize}`}>
                     {entry.participant_name}
                   </p>
-                  <p className={`font-black tabular-nums mt-1 ${isFirst ? "text-2xl" : "text-xl"} ${cfg.textPts}`}>
+                  <p className={`font-black tabular-nums mt-0.5 ${cfg.ptSize} ${cfg.textPts}`}>
                     {entry.total_points}
-                    <span className="text-xs font-normal text-gray-400 ml-0.5">pt</span>
+                    <span className="text-[10px] font-normal text-gray-400 ml-0.5">pt</span>
                   </p>
                   {allFinished && (
-                    <p className="text-xs font-bold text-gray-500 mt-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-gray-500 mt-0.5">
                       {fmt(prizes[cfg.prizeKey])}
                     </p>
                   )}
                 </div>
 
-                {/* Podium block */}
+                {/* Podium step */}
                 <div
-                  className={`w-full mt-1.5 rounded-b-lg bg-gradient-to-b ${cfg.gradient} opacity-30 ${
-                    isFirst ? "h-6" : dataIdx === 1 ? "h-4" : "h-2"
+                  className={`w-full mt-1 rounded-b-lg bg-gradient-to-b ${cfg.gradient} opacity-30 ${
+                    dataIdx === 0 ? "h-5" : dataIdx === 1 ? "h-3" : "h-1.5"
                   }`}
                 />
               </div>
