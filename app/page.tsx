@@ -172,30 +172,19 @@ function DashboardSections({ data, tvMode }: { data: DashboardData; tvMode: bool
 
   return (
     <div className="space-y-8">
-      {/* Wedstrijdkaarten — altijd bovenaan */}
+      {/* 1. Wedstrijdkaarten */}
       {data.match_prediction_stats.length > 0 && (
         <MatchCards matches={data.match_prediction_stats} />
       )}
 
-      {/* Topscoorders — altijd na wedstrijdkaarten */}
+      {/* 2. Podium + ranglijst (alleen als er gespeeld is) */}
+      {leaderboardSection}
+
+      {/* 3. Topscoorders */}
       {topScorerSection}
 
-      {/*
-        Dynamische volgorde:
-        - Nog niet gespeeld → voorspellingen eerst, ranglijst daarna
-        - Gespeeld          → ranglijst + podium eerst, voorspellingen daarna
-      */}
-      {data.has_finished ? (
-        <>
-          {leaderboardSection}
-          {predictionsSection}
-        </>
-      ) : (
-        <>
-          {predictionsSection}
-          {leaderboardSection}
-        </>
-      )}
+      {/* 4. Alle voorspellingen */}
+      {predictionsSection}
 
       {!tvMode && lastUpdated && (
         <p className="text-center text-xs text-gray-400 pb-4">
