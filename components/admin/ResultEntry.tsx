@@ -22,7 +22,6 @@ interface MatchState {
   players: Player[];
   status: SaveStatus;
   errorMsg: string;
-  isFinished: boolean;
   isCancelled: boolean;
   cancelledReason: string;
   cancelStatus: CancelStatus;
@@ -34,12 +33,23 @@ interface MatchState {
 export default function ResultEntry({ token }: ResultEntryProps) {
   const [matches, setMatches] = useState<MatchWithTeams[]>([]);
   const [states, setStates] = useState<Record<string, MatchState>>({});
+  const [standingsVisible, setStandingsVisible] = useState<boolean>(true);
+  const [revealSaving, setRevealSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
     try {
-      const res = await fetch("/api/matches");
+      const [res, revealRes] = await Promise.all([
+        fetch("/api/matches"),
+        fetch("/api/admin/reveal", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
       if (!res.ok) return;
+      if (revealRes.ok) {
+        const s = await revealRes.json();
+        setStandingsVisible(s.standings_visible !== false);
+      }
       const data: MatchWithTeams[] = await res.json();
       setMatches(data);
 
@@ -69,7 +79,6 @@ export default function ResultEntry({ token }: ResultEntryProps) {
             players,
             status: "idle",
             errorMsg: "",
-            isFinished: match.is_finished,
             isCancelled: match.is_cancelled ?? false,
             cancelledReason: match.cancelled_reason ?? "",
             cancelStatus: "idle",
@@ -85,7 +94,7 @@ export default function ResultEntry({ token }: ResultEntryProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchAll();
@@ -125,6 +134,30 @@ export default function ResultEntry({ token }: ResultEntryProps) {
       return { ...s, player_id: value as string };
     });
     patchState(matchId, { scorers: updated });
+  }
+
+  async function toggleStandings() {
+    const next = !standingsVisible;
+    setRevealSaving(true);
+    try {
+      const res = await fetch("/api/admin/reveal", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ standings_visible: next }),
+      });
+      if (res.ok) {
+        setStandingsVisible(next);
+      } else {
+        console.error("Toggle standings mislukt:", await res.text());
+      }
+    } catch {
+      // ignore
+    } finally {
+      setRevealSaving(false);
+    }
   }
 
   async function handleCancel(matchId: string, cancel: boolean) {
@@ -190,7 +223,7 @@ export default function ResultEntry({ token }: ResultEntryProps) {
         body: JSON.stringify({
           actual_home_goals: cur.homeGoals,
           actual_away_goals: cur.awayGoals,
-          is_finished: cur.isFinished,
+          is_finished: true,
           scorers: cur.scorers.filter((s) => s.player_id),
         }),
       });
@@ -254,6 +287,44 @@ export default function ResultEntry({ token }: ResultEntryProps) {
         </button>
       </div>
 
+      {/* Prijsuitreiking reveal knop */}
+      <div className={`rounded-2xl border-2 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+          standingsVisible
+            ? "bg-green-50 border-green-200"
+            : "bg-gradient-to-br from-[#1e3a8a] to-blue-900 border-[#1e3a8a] text-white"
+        }`}>
+          <div>
+            {standingsVisible ? (
+              <>
+                <p className="text-xs uppercase tracking-widest font-semibold text-green-600 mb-0.5">Standen</p>
+                <p className="font-bold text-green-900 text-lg">Standen zijn zichtbaar voor iedereen</p>
+                <p className="text-sm text-green-700 mt-0.5">Verberg ze vlak voor de prijsuitreiking en onthul ze daarna feestelijk.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs uppercase tracking-widest font-semibold text-blue-300 mb-0.5">Prijsuitreiking modus</p>
+                <p className="font-bold text-white text-lg">🔒 Standen verborgen</p>
+                <p className="text-sm text-blue-200 mt-0.5">Het publiek ziet een mysterieus scherm. Onthul de winnaar als iedereen klaar zit!</p>
+              </>
+            )}
+          </div>
+          <button
+            onClick={toggleStandings}
+            disabled={revealSaving}
+            className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-60 ${
+              standingsVisible
+                ? "bg-[#1e3a8a] text-white hover:bg-[#2d4fa8]"
+                : "bg-white text-[#1e3a8a] hover:bg-blue-50 shadow-lg shadow-blue-900/30 animate-pulse"
+            }`}
+          >
+            {revealSaving
+              ? "..."
+              : standingsVisible
+              ? "🔒 Verberg standen"
+              : "🎉 Onthul de winnaar!"}
+          </button>
+        </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {matches.map((match) => {
           const s = states[match.id];
@@ -292,24 +363,6 @@ export default function ResultEntry({ token }: ResultEntryProps) {
                   <p className="text-sm text-gray-400">vs {opponentName}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {!s.isCancelled && (
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <span className="text-sm text-gray-500">Afgelopen</span>
-                      <button
-                        type="button"
-                        onClick={() => patchState(match.id, { isFinished: !s.isFinished })}
-                        className={`relative w-10 h-5 rounded-full transition-colors ${
-                          s.isFinished ? "bg-green-500" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                            s.isFinished ? "translate-x-5" : ""
-                          }`}
-                        />
-                      </button>
-                    </label>
-                  )}
                   {/* Cancel toggle button */}
                   {!s.isCancelled ? (
                     <button

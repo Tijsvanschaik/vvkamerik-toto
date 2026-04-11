@@ -81,7 +81,8 @@ export function calculateMatchPoints(
     return result;
   }
 
-  if (!match.is_finished || match.actual_home_goals == null || match.actual_away_goals == null) {
+  // Punten worden berekend zodra een score is ingevuld (is_finished niet vereist)
+  if (match.actual_home_goals == null || match.actual_away_goals == null) {
     return result;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import type { LeaderboardEntry } from "@/lib/types";
 import MatchCards, { type MatchCardData } from "@/components/dashboard/MatchCards";
@@ -36,6 +36,7 @@ interface DashboardData {
   club_share: number;
   all_finished: boolean;
   has_finished: boolean;
+  standings_visible: boolean;
   match_prediction_stats: MatchCardData[];
   player_vote_stats: {
     player_id: string;
@@ -123,17 +124,53 @@ function HeaderStats({ data }: { data: DashboardData }) {
   );
 }
 
+// ── Locked standings screen ───────────────────────────────────────────────────
+function LockedStandings({ participantCount }: { participantCount: number }) {
+  return (
+    <div className="bg-gradient-to-br from-[#1e3a8a] to-blue-950 rounded-2xl p-8 sm:p-12 text-center text-white shadow-xl">
+      <div className="text-6xl mb-4 animate-bounce">🏆</div>
+      <h2 className="text-2xl sm:text-3xl font-black mb-2">Prijsuitreiking!</h2>
+      <p className="text-blue-200 text-base mb-6">
+        De standen worden zo dadelijk onthuld...
+      </p>
+      <div className="inline-flex items-center gap-2 bg-white/10 rounded-xl px-5 py-3">
+        <span className="text-blue-300 text-sm">Deelnemers</span>
+        <span className="font-black text-xl">{participantCount}</span>
+      </div>
+      <p className="text-blue-400 text-xs mt-6 animate-pulse">Wacht op het sein van de presentator...</p>
+    </div>
+  );
+}
+
 // ── Dashboard sections ────────────────────────────────────────────────────────
 function DashboardSections({ data, tvMode }: { data: DashboardData; tvMode: boolean }) {
   const [confettiShown, setConfettiShown] = useState(false);
+  const [revealAnimating, setRevealAnimating] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const prevVisibleRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     setLastUpdated(new Date());
   }, [data]);
 
+  // Detect reveal moment: standings_visible flips from false → true
   useEffect(() => {
-    if (data.all_finished && !confettiShown && data.leaderboard.length > 0) {
+    const prev = prevVisibleRef.current;
+    prevVisibleRef.current = data.standings_visible;
+    if (prev === false && data.standings_visible === true) {
+      // 🎉 Dramatic reveal!
+      setRevealAnimating(true);
+      setTimeout(() => setRevealAnimating(false), 2000);
+      const fire = (opts: Record<string, unknown>) =>
+        import("canvas-confetti").then((m) => m.default(opts));
+      fire({ particleCount: 120, spread: 80, origin: { x: 0.2, y: 0.5 }, colors: ["#1e3a8a", "#fbbf24", "#ffffff"] });
+      setTimeout(() => fire({ particleCount: 120, spread: 80, origin: { x: 0.8, y: 0.5 }, colors: ["#1e3a8a", "#fbbf24", "#ffffff"] }), 300);
+      setTimeout(() => fire({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0.3 }, colors: ["#fbbf24", "#f59e0b", "#ffffff", "#1e3a8a"] }), 600);
+    }
+  }, [data.standings_visible]);
+
+  useEffect(() => {
+    if (data.all_finished && data.standings_visible && !confettiShown && data.leaderboard.length > 0) {
       setConfettiShown(true);
       import("canvas-confetti").then((m) =>
         m.default({
@@ -144,7 +181,7 @@ function DashboardSections({ data, tvMode }: { data: DashboardData; tvMode: bool
         })
       );
     }
-  }, [data.all_finished, confettiShown, data.leaderboard.length]);
+  }, [data.all_finished, data.standings_visible, confettiShown, data.leaderboard.length]);
 
   const top3 = data.leaderboard.slice(0, 3);
   const prizes = {
@@ -177,14 +214,21 @@ function DashboardSections({ data, tvMode }: { data: DashboardData; tvMode: bool
         <MatchCards matches={data.match_prediction_stats} />
       )}
 
-      {/* 2. Podium + ranglijst (alleen als er gespeeld is) */}
-      {leaderboardSection}
+      {/* 2–4: verborgen of zichtbaar */}
+      {!data.standings_visible ? (
+        <LockedStandings participantCount={data.participant_count} />
+      ) : (
+        <div className={`space-y-8 transition-all duration-700 ${revealAnimating ? "animate-pulse" : ""}`}>
+          {/* 2. Podium + ranglijst */}
+          {leaderboardSection}
 
-      {/* 3. Topscoorders */}
-      {topScorerSection}
+          {/* 3. Topscoorders */}
+          {topScorerSection}
 
-      {/* 4. Alle voorspellingen */}
-      {predictionsSection}
+          {/* 4. Alle voorspellingen */}
+          {predictionsSection}
+        </div>
+      )}
 
       {!tvMode && lastUpdated && (
         <p className="text-center text-xs text-gray-400 pb-4">

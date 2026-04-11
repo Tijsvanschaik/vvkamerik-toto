@@ -52,9 +52,10 @@ export async function GET() {
     }));
 
     // --- Leaderboard ---
-    const activeMathces = matches.filter((m) => !m.is_cancelled);
-    const hasFinished = activeMathces.some((m) => m.is_finished);
-    const allFinished = activeMathces.length > 0 && activeMathces.every((m) => m.is_finished);
+    // Een wedstrijd "telt" zodra er een score is ingevuld (is_finished niet vereist)
+    const activeMatches = matches.filter((m) => !m.is_cancelled);
+    const hasFinished = activeMatches.some((m) => m.actual_home_goals != null);
+    const allFinished = activeMatches.length > 0 && activeMatches.every((m) => m.actual_home_goals != null);
 
     const leaderboard = hasFinished
       ? calculateLeaderboard({
@@ -193,6 +194,7 @@ export async function GET() {
       club_share: clubShare,
       all_finished: allFinished,
       has_finished: hasFinished,
+      standings_visible: settingsData.standings_visible !== false,
       match_prediction_stats: matchPredictionStats,
       player_vote_stats: playerVoteStats,
       all_predictions: allPredictions,

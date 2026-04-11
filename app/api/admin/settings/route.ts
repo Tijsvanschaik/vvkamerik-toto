@@ -45,6 +45,7 @@ export async function PUT(request: NextRequest) {
       "points_topscorer_min",
       "predictions_open",
       "tikkie_url",
+      "standings_visible",
     ];
 
     const filtered: Record<string, unknown> = {};
