@@ -9,6 +9,7 @@ import MatchManager from "@/components/admin/MatchManager";
 import ResultEntry from "@/components/admin/ResultEntry";
 import PredictionsOverview from "@/components/admin/PredictionsOverview";
 import ResetButton from "@/components/admin/ResetButton";
+import LeaderboardAdmin from "@/components/admin/LeaderboardAdmin";
 
 type Tab =
   | "settings"
@@ -16,6 +17,7 @@ type Tab =
   | "players"
   | "matches"
   | "results"
+  | "leaderboard"
   | "predictions"
   | "reset";
 
@@ -25,6 +27,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "players", label: "Spelers" },
   { id: "matches", label: "Wedstrijden" },
   { id: "results", label: "Live uitslagen" },
+  { id: "leaderboard", label: "Ranglijst" },
   { id: "predictions", label: "Inzendingen" },
   { id: "reset", label: "Reset" },
 ];
@@ -95,6 +98,7 @@ export default function AdminPage() {
         {activeTab === "players" && <PlayerManager token={token} />}
         {activeTab === "matches" && <MatchManager token={token} />}
         {activeTab === "results" && <ResultEntry token={token} />}
+        {activeTab === "leaderboard" && <LeaderboardAdmin />}
         {activeTab === "predictions" && <PredictionsOverview token={token} />}
         {activeTab === "reset" && <ResetButton token={token} />}
       </div>
