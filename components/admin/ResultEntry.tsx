@@ -342,8 +342,6 @@ export default function ResultEntry({ token }: ResultEntryProps) {
               className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
                 s.isCancelled
                   ? "border-orange-300 opacity-70"
-                  : s.isFinished
-                  ? "border-green-200"
                   : s.dirty
                   ? "border-[#1e3a8a]/30"
                   : "border-gray-100"
