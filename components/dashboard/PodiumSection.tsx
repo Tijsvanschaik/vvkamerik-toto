@@ -58,16 +58,9 @@ export default function PodiumSection({ top3, prizes, allFinished }: PodiumSecti
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-6 pt-5 pb-4 border-b border-gray-50 flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-0.5">Top 3</p>
-          <h2 className="text-xl font-bold text-gray-900">Podium</h2>
-        </div>
-        {allFinished && (
-          <span className="text-xs font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
-            ✓ Eindstand
-          </span>
-        )}
+      <div className="px-6 pt-5 pb-4 border-b border-gray-50">
+        <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 mb-0.5">Top 3</p>
+        <h2 className="text-xl font-bold text-gray-900">Podium</h2>
       </div>
 
       <div className="px-4 pt-4 pb-3">
